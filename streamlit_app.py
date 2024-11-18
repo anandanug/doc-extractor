@@ -47,6 +47,13 @@ def preview_file(uploaded_file):
 
 # Fungsi utama aplikasi
 def main():
+
+    st.set_page_config(
+        page_title="Doc Extraction - Document to JSON",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
+    
     st.title("📄 Doc Extraction: PDF to JSON")
     st.write("This application is used to extract key information from documents and convert it into JSON format.")
 
