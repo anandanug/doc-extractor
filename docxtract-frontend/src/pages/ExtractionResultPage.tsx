@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Download,
@@ -8,26 +8,25 @@ import {
   ChevronRight,
   Image as ImageIcon,
   File as FileIcon,
+  Plus,
+  Trash2,
+  Save,
 } from "lucide-react";
 
 /**
- * Extraction Result Page
+ * Extraction Result Page — Editable
  * - Sidebar (Dashboard, Results, Settings)
- * - Document preview panel (image/pdf placeholder)
- * - Extracted summary & line items table
- * - Download Excel button (dynamic import SheetJS)
- *
- * Props you can pass later:
- *   - previewUrl?: string (blob/object URL of uploaded file for preview)
- *   - result?: ExtractResult (parsed extraction payload)
+ * - Document preview (image/pdf)
+ * - Editable extracted fields (summary + line items)
+ * - Auto-recalculate totals (optional)
+ * - Download Excel from the edited data
  */
 
-// Types (inline for portability)
 export type LineItem = {
   description?: string;
-  quantity?: number;
-  unit_price?: number;
-  total?: number;
+  quantity?: number | null;
+  unit_price?: number | null;
+  total?: number | null;
 };
 
 export type ExtractResult = {
@@ -35,13 +34,12 @@ export type ExtractResult = {
   date?: string; // ISO string
   vendor_name?: string;
   currency?: string; // e.g., "IDR"
-  subtotal?: number;
-  tax?: number;
-  grand_total?: number;
+  subtotal?: number | null;
+  tax?: number | null;
+  grand_total?: number | null;
   items?: LineItem[];
 };
 
-// Mock result (fallback demo)
 const MOCK_RESULT: ExtractResult = {
   invoice_no: "INV-2025-0912",
   date: "2025-09-12",
@@ -66,17 +64,24 @@ function classNames(...arr: (string | false | null | undefined)[]) {
   return arr.filter(Boolean).join(" ");
 }
 
-function formatCurrency(n?: number, currency: string = "IDR") {
-  if (n == null) return "-";
+function formatCurrency(n?: number | null, currency: string = "IDR") {
+  if (n == null || Number.isNaN(n)) return "-";
   try {
     return new Intl.NumberFormat("id-ID", { style: "currency", currency }).format(n);
   } catch {
-    return `${currency} ${n.toLocaleString("id-ID")}`;
+    return `${currency} ${Number(n).toLocaleString("id-ID")}`;
   }
 }
 
+function parseNumber(input: string): number | null {
+  if (!input?.trim()) return null;
+  // Remove non-digit except comma/period, normalize to dot
+  const normalized = input.replace(/[^0-9,.-]/g, "").replace(/\./g, "").replace(",", ".");
+  const num = Number(normalized);
+  return Number.isFinite(num) ? num : null;
+}
+
 async function downloadExcel(filename: string, rows: Record<string, unknown>[]) {
-  // Dynamic import to avoid forcing dependency during dev
   const XLSX = await import("xlsx");
   const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
@@ -104,21 +109,37 @@ export default function ExtractionResultPage({
   result?: ExtractResult;
 }) {
   const [activeKey, setActiveKey] = useState("results");
+  const [data, setData] = useState<ExtractResult>(() => ({
+    ...result,
+    items: result.items?.map((it) => ({ ...it })) ?? [],
+  }));
+  const [autoCalc, setAutoCalc] = useState(true);
+
+  useEffect(() => {
+    if (!autoCalc) return;
+    // Recalculate totals from items
+    const itemTotal = (data.items ?? []).reduce((acc, it) => acc + (Number(it.total) || 0), 0);
+    const subtotal = itemTotal;
+    const tax = data.tax ?? 0; // keep user tax unless null
+    const grand = subtotal + (Number(tax) || 0);
+    setData((prev) => ({ ...prev, subtotal, grand_total: grand }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(data.items), autoCalc]);
+
   const palette = useMemo(
     () => ({
-      primary: "#1e3a8a", // blue-900
-      primaryHover: "#1d4ed8", // blue-700
-      bg: "#f8fafc", // slate-50
+      primary: "#1e3a8a",
+      primaryHover: "#1d4ed8",
+      bg: "#f8fafc",
       card: "#ffffff",
-      border: "#e2e8f0", // slate-200
-      text: "#0f172a", // slate-900
-      sub: "#64748b", // slate-500
+      border: "#e2e8f0",
+      text: "#0f172a",
+      sub: "#64748b",
     }),
     []
   );
 
-  const items = result.items ?? [];
-  const rows = items.map((it) => ({
+  const rows = (data.items ?? []).map((it) => ({
     Deskripsi: it.description ?? "",
     Qty: it.quantity ?? "",
     "Harga Satuan": it.unit_price ?? "",
@@ -127,12 +148,48 @@ export default function ExtractionResultPage({
 
   const handleDownload = async () => {
     await downloadExcel(
-      `hasil-ekstraksi-${result.invoice_no || "invoice"}.xlsx`,
+      `hasil-ekstraksi-${data.invoice_no || "invoice"}.xlsx`,
       rows
     );
   };
 
   const isPdf = useMemo(() => (previewUrl || "").toLowerCase().endsWith(".pdf"), [previewUrl]);
+
+  // Handlers for summary fields
+  const setField = (key: keyof ExtractResult, value: string | number | null) => {
+    setData((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // Handlers for items
+  const updateItem = (idx: number, patch: Partial<LineItem>) => {
+    setData((prev) => {
+      const next = [...(prev.items ?? [])];
+      const current = { ...(next[idx] || {}) } as LineItem;
+      const merged = { ...current, ...patch } as LineItem;
+      // If quantity/unit_price change and autoCalc, compute total
+      if (autoCalc && ("quantity" in patch || "unit_price" in patch)) {
+        const q = Number(merged.quantity) || 0;
+        const u = Number(merged.unit_price) || 0;
+        merged.total = q * u;
+      }
+      next[idx] = merged;
+      return { ...prev, items: next };
+    });
+  };
+
+  const addItem = () => {
+    setData((prev) => ({
+      ...prev,
+      items: [...(prev.items ?? []), { description: "", quantity: null, unit_price: null, total: null }],
+    }));
+  };
+
+  const removeItem = (idx: number) => {
+    setData((prev) => ({
+      ...prev,
+      items: (prev.items ?? []).filter((_, i) => i !== idx),
+    }));
+  };
 
   return (
     <div className="min-h-screen w-full" style={{ backgroundColor: palette.bg }}>
@@ -180,8 +237,8 @@ export default function ExtractionResultPage({
           <header className="sticky top-0 z-10 border-b bg-white/80 backdrop-blur">
             <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
               <div>
-                <h1 className="text-lg font-semibold text-slate-800">Hasil Ekstraksi</h1>
-                <p className="text-xs text-slate-500">Pratinjau dokumen dan tinjau hasil teks terstruktur</p>
+                <h1 className="text-lg font-semibold text-slate-800">Hasil Ekstraksi (Editable)</h1>
+                <p className="text-xs text-slate-500">Pratinjau, koreksi data, lalu unduh Excel</p>
               </div>
               <div className="hidden items-center gap-2 md:flex">
                 <button
@@ -214,7 +271,7 @@ export default function ExtractionResultPage({
                   {previewUrl ? (
                     isPdf ? (
                       <object data={previewUrl} type="application/pdf" className="h-[520px] w-full rounded-xl border" style={{ borderColor: palette.border }}>
-                        <p className="text-sm text-slate-500 p-6">PDF preview tidak didukung di browser ini. <a href={previewUrl} className="text-blue-700 underline">Unduh PDF</a></p>
+                        <p className="p-6 text-sm text-slate-500">PDF preview tidak didukung di browser ini. <a href={previewUrl} className="text-blue-700 underline">Unduh PDF</a></p>
                       </object>
                     ) : (
                       <img src={previewUrl} alt="Preview" className="max-h-[520px] w-auto rounded-xl border" style={{ borderColor: palette.border }} />
@@ -233,7 +290,7 @@ export default function ExtractionResultPage({
                 </div>
               </motion.div>
 
-              {/* Extracted Result Panel */}
+              {/* Editable Result Panel */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -243,45 +300,95 @@ export default function ExtractionResultPage({
               >
                 <div className="flex items-center justify-between border-b p-4" style={{ borderColor: palette.border }}>
                   <h3 className="text-sm font-semibold text-slate-800">Data Ekstraksi</h3>
-                  <button
-                    onClick={handleDownload}
-                    className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-3 py-2 text-xs font-medium text-white transition hover:bg-blue-800 lg:hidden"
-                  >
-                    <Download size={16} />
-                    Excel
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 text-xs text-slate-600">
+                      <input
+                        type="checkbox"
+                        className="rounded border-slate-300"
+                        checked={autoCalc}
+                        onChange={(e) => setAutoCalc(e.target.checked)}
+                      />
+                      Auto-calc total
+                    </label>
+                    <button
+                      onClick={handleDownload}
+                      className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-3 py-2 text-xs font-medium text-white transition hover:bg-blue-800 lg:hidden"
+                    >
+                      <Download size={16} />
+                      Excel
+                    </button>
+                  </div>
                 </div>
 
-                {/* Summary */}
+                {/* Summary (editable) */}
                 <div className="grid grid-cols-2 gap-4 p-4 text-sm md:grid-cols-3">
                   <div>
                     <div className="text-xs text-slate-500">Vendor</div>
-                    <div className="font-medium text-slate-800">{result.vendor_name || "-"}</div>
+                    <input
+                      value={data.vendor_name || ""}
+                      onChange={(e) => setField("vendor_name", e.target.value)}
+                      className="mt-1 w-full rounded-xl border px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-200"
+                    />
                   </div>
                   <div>
                     <div className="text-xs text-slate-500">No. Invoice</div>
-                    <div className="font-medium text-slate-800">{result.invoice_no || "-"}</div>
+                    <input
+                      value={data.invoice_no || ""}
+                      onChange={(e) => setField("invoice_no", e.target.value)}
+                      className="mt-1 w-full rounded-xl border px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-200"
+                    />
                   </div>
                   <div>
                     <div className="text-xs text-slate-500">Tanggal</div>
-                    <div className="font-medium text-slate-800">{result.date || "-"}</div>
+                    <input
+                      type="date"
+                      value={data.date || ""}
+                      onChange={(e) => setField("date", e.target.value)}
+                      className="mt-1 w-full rounded-xl border px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-200"
+                    />
                   </div>
                   <div>
                     <div className="text-xs text-slate-500">Subtotal</div>
-                    <div className="font-medium text-slate-800">{formatCurrency(result.subtotal, result.currency)}</div>
+                    <input
+                      inputMode="decimal"
+                      value={data.subtotal ?? ""}
+                      onChange={(e) => setField("subtotal", parseNumber(e.target.value))}
+                      disabled={autoCalc}
+                      className={classNames(
+                        "mt-1 w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2",
+                        autoCalc ? "bg-slate-50 text-slate-500" : "text-slate-800 focus:ring-blue-200"
+                      )}
+                    />
                   </div>
                   <div>
                     <div className="text-xs text-slate-500">Pajak</div>
-                    <div className="font-medium text-slate-800">{formatCurrency(result.tax, result.currency)}</div>
+                    <input
+                      inputMode="decimal"
+                      value={data.tax ?? ""}
+                      onChange={(e) => setField("tax", parseNumber(e.target.value))}
+                      className="mt-1 w-full rounded-xl border px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-200"
+                    />
                   </div>
                   <div>
                     <div className="text-xs text-slate-500">Total</div>
-                    <div className="font-semibold text-blue-800">{formatCurrency(result.grand_total, result.currency)}</div>
+                    <div className="mt-1 w-full rounded-xl border bg-slate-50 px-3 py-2 text-sm font-semibold text-blue-800">
+                      {formatCurrency(data.grand_total, data.currency)}
+                    </div>
                   </div>
                 </div>
 
-                {/* Items Table */}
+                {/* Items Table (editable) */}
                 <div className="p-4 pt-0">
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="text-sm font-medium text-slate-700">Item</div>
+                    <button
+                      onClick={addItem}
+                      className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs text-slate-700 transition hover:bg-slate-50"
+                    >
+                      <Plus size={16} /> Tambah Baris
+                    </button>
+                  </div>
+
                   <div className="overflow-x-auto rounded-xl border" style={{ borderColor: palette.border }}>
                     <table className="min-w-full text-sm">
                       <thead className="bg-slate-50 text-slate-600">
@@ -290,16 +397,17 @@ export default function ExtractionResultPage({
                           <th className="p-3 text-left font-medium">Qty</th>
                           <th className="p-3 text-left font-medium">Harga Satuan</th>
                           <th className="p-3 text-left font-medium">Total</th>
+                          <th className="p-3"></th>
                         </tr>
                       </thead>
                       <tbody>
                         <AnimatePresence initial={false}>
-                          {items.length === 0 ? (
+                          {(data.items ?? []).length === 0 ? (
                             <tr>
-                              <td className="p-3 text-slate-500" colSpan={4}>Tidak ada item</td>
+                              <td className="p-3 text-slate-500" colSpan={5}>Tidak ada item</td>
                             </tr>
                           ) : (
-                            items.map((it, i) => (
+                            (data.items ?? []).map((it, i) => (
                               <motion.tr
                                 key={i}
                                 initial={{ opacity: 0, y: 6 }}
@@ -308,10 +416,57 @@ export default function ExtractionResultPage({
                                 className="border-t"
                                 style={{ borderColor: palette.border }}
                               >
-                                <td className="p-3">{it.description ?? "-"}</td>
-                                <td className="p-3">{it.quantity ?? "-"}</td>
-                                <td className="p-3">{formatCurrency(it.unit_price, result.currency)}</td>
-                                <td className="p-3">{formatCurrency(it.total, result.currency)}</td>
+                                <td className="p-3 align-top">
+                                  <input
+                                    value={it.description ?? ""}
+                                    onChange={(e) => updateItem(i, { description: e.target.value })}
+                                    className="w-full rounded-xl border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-200"
+                                    placeholder="Deskripsi"
+                                  />
+                                </td>
+                                <td className="p-3 align-top">
+                                  <input
+                                    inputMode="decimal"
+                                    value={it.quantity ?? ""}
+                                    onChange={(e) => updateItem(i, { quantity: parseNumber(e.target.value) })}
+                                    className="w-28 rounded-xl border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-200"
+                                    placeholder="0"
+                                  />
+                                </td>
+                                <td className="p-3 align-top">
+                                  <input
+                                    inputMode="decimal"
+                                    value={it.unit_price ?? ""}
+                                    onChange={(e) => updateItem(i, { unit_price: parseNumber(e.target.value) })}
+                                    className="w-36 rounded-xl border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-200"
+                                    placeholder="0"
+                                  />
+                                </td>
+                                <td className="p-3 align-top">
+                                  <input
+                                    inputMode="decimal"
+                                    value={it.total ?? ""}
+                                    onChange={(e) => updateItem(i, { total: parseNumber(e.target.value) })}
+                                    disabled={autoCalc}
+                                    className={classNames(
+                                      "w-36 rounded-xl border px-3 py-2 outline-none focus:ring-2",
+                                      autoCalc ? "bg-slate-50 text-slate-500" : "focus:ring-blue-200"
+                                    )}
+                                    placeholder="0"
+                                  />
+                                  <div className="text-xs text-slate-500 mt-1">
+                                    {formatCurrency(it.total, data.currency)}
+                                  </div>
+                                </td>
+                                <td className="p-3 align-top">
+                                  <button
+                                    onClick={() => removeItem(i)}
+                                    className="inline-flex items-center gap-2 rounded-xl border px-2 py-2 text-xs text-red-600 transition hover:bg-red-50"
+                                    aria-label="Hapus baris"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </td>
                               </motion.tr>
                             ))
                           )}
@@ -327,11 +482,11 @@ export default function ExtractionResultPage({
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <div className="rounded-2xl border bg-white p-5" style={{ borderColor: palette.border }}>
                 <h3 className="mb-1 text-sm font-semibold text-slate-800">Catatan Akurasi</h3>
-                <p className="text-xs text-slate-500">Periksa kembali nominal & tanggal. Jika keliru, koreksi manual atau unggah ulang dengan kualitas dokumen lebih jelas.</p>
+                <p className="text-xs text-slate-500">Koreksi manual nilai yang kurang tepat. Gunakan Auto-calc untuk menghitung total dari Qty × Harga Satuan.</p>
               </div>
               <div className="rounded-2xl border bg-white p-5" style={{ borderColor: palette.border }}>
                 <h3 className="mb-1 text-sm font-semibold text-slate-800">Langkah Selanjutnya</h3>
-                <p className="text-xs text-slate-500">Unduh Excel atau lanjutkan ke integrasi Google Sheets dari menu Settings.</p>
+                <p className="text-xs text-slate-500">Unduh Excel atau sinkronkan ke Google Sheets dari menu Settings.</p>
               </div>
             </div>
           </div>
