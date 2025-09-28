@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Upload,
@@ -27,7 +28,7 @@ const DOC_TYPES = [
   { value: "laporan", label: "Laporan Keuangan" },
 ];
 
-function classNames(...arr) {
+function classNames(...arr: (string | false | null | undefined)[]): string {
   return arr.filter(Boolean).join(" ");
 }
 
