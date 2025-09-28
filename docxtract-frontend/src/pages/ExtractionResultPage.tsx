@@ -11,12 +11,14 @@ import {
   Plus,
   Trash2,
   Save,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 /**
- * Extraction Result Page — Editable
+ * Extraction Result Page — Editable + Preview Toggle
  * - Sidebar (Dashboard, Results, Settings)
- * - Document preview (image/pdf)
+ * - Document preview (image/pdf) can be hidden/shown
  * - Editable extracted fields (summary + line items)
  * - Auto-recalculate totals (optional)
  * - Download Excel from the edited data
@@ -109,6 +111,7 @@ export default function ExtractionResultPage({
   result?: ExtractResult;
 }) {
   const [activeKey, setActiveKey] = useState("results");
+  const [showPreview, setShowPreview] = useState(true);
   const [data, setData] = useState<ExtractResult>(() => ({
     ...result,
     items: result.items?.map((it) => ({ ...it })) ?? [],
@@ -242,6 +245,13 @@ export default function ExtractionResultPage({
               </div>
               <div className="hidden items-center gap-2 md:flex">
                 <button
+                  onClick={() => setShowPreview((s) => !s)}
+                  className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                >
+                  {showPreview ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPreview ? "Sembunyikan Pratinjau" : "Tampilkan Pratinjau"}
+                </button>
+                <button
                   onClick={handleDownload}
                   className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-3 py-2 text-xs font-medium text-white transition hover:bg-blue-800"
                 >
@@ -254,41 +264,47 @@ export default function ExtractionResultPage({
 
           {/* Content */}
           <div className="mx-auto max-w-6xl p-5">
-            <div className="grid gap-6 lg:grid-cols-2">
-              {/* Preview Panel */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="rounded-2xl border bg-white shadow-sm"
-                style={{ borderColor: palette.border }}
-              >
-                <div className="flex items-center justify-between border-b p-4" style={{ borderColor: palette.border }}>
-                  <h3 className="text-sm font-semibold text-slate-800">Pratinjau Dokumen</h3>
-                  <span className="text-xs text-slate-500">{previewUrl ? (isPdf ? "PDF" : "Gambar") : "Tidak ada pratinjau"}</span>
-                </div>
-                <div className="grid place-items-center p-4">
-                  {previewUrl ? (
-                    isPdf ? (
-                      <object data={previewUrl} type="application/pdf" className="h-[520px] w-full rounded-xl border" style={{ borderColor: palette.border }}>
-                        <p className="p-6 text-sm text-slate-500">PDF preview tidak didukung di browser ini. <a href={previewUrl} className="text-blue-700 underline">Unduh PDF</a></p>
-                      </object>
-                    ) : (
-                      <img src={previewUrl} alt="Preview" className="max-h-[520px] w-auto rounded-xl border" style={{ borderColor: palette.border }} />
-                    )
-                  ) : (
-                    <div className="grid h-[420px] w-full place-items-center rounded-xl border bg-slate-50" style={{ borderColor: palette.border }}>
-                      <div className="text-center">
-                        <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-blue-600/10 text-blue-700">
-                          <ImageIcon />
-                        </div>
-                        <p className="text-sm font-medium text-slate-700">Belum ada pratinjau</p>
-                        <p className="text-xs text-slate-500">Unggah dokumen pada halaman Upload untuk melihat tampilan di sini.</p>
-                      </div>
+            <div className={classNames("grid gap-6 transition-[grid-template-columns]", showPreview ? "lg:grid-cols-2" : "lg:grid-cols-1") }>
+              {/* Preview Panel (toggleable) */}
+              <AnimatePresence initial={false}>
+                {showPreview && (
+                  <motion.div
+                    key="preview"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.25 }}
+                    className="rounded-2xl border bg-white shadow-sm"
+                    style={{ borderColor: palette.border }}
+                  >
+                    <div className="flex items-center justify-between border-b p-4" style={{ borderColor: palette.border }}>
+                      <h3 className="text-sm font-semibold text-slate-800">Pratinjau Dokumen</h3>
+                      <span className="text-xs text-slate-500">{previewUrl ? (isPdf ? "PDF" : "Gambar") : "Tidak ada pratinjau"}</span>
                     </div>
-                  )}
-                </div>
-              </motion.div>
+                    <div className="grid place-items-center p-4">
+                      {previewUrl ? (
+                        isPdf ? (
+                          <object data={previewUrl} type="application/pdf" className="h-[520px] w-full rounded-xl border" style={{ borderColor: palette.border }}>
+                            <p className="p-6 text-sm text-slate-500">PDF preview tidak didukung di browser ini. <a href={previewUrl} className="text-blue-700 underline">Unduh PDF</a></p>
+                          </object>
+                        ) : (
+                          <img src={previewUrl} alt="Preview" className="max-h-[520px] w-auto rounded-xl border" style={{ borderColor: palette.border }} />
+                        )
+                      ) : (
+                        <div className="grid h-[420px] w-full place-items-center rounded-xl border bg-slate-50" style={{ borderColor: palette.border }}>
+                          <div className="text-center">
+                            <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-blue-600/10 text-blue-700">
+                              <ImageIcon />
+                            </div>
+                            <p className="text-sm font-medium text-slate-700">Belum ada pratinjau</p>
+                            <p className="text-xs text-slate-500">Unggah dokumen pada halaman Upload untuk melihat tampilan di sini.</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Editable Result Panel */}
               <motion.div
@@ -310,13 +326,23 @@ export default function ExtractionResultPage({
                       />
                       Auto-calc total
                     </label>
-                    <button
-                      onClick={handleDownload}
-                      className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-3 py-2 text-xs font-medium text-white transition hover:bg-blue-800 lg:hidden"
-                    >
-                      <Download size={16} />
-                      Excel
-                    </button>
+                    {/* Mobile buttons */}
+                    <div className="flex items-center gap-2 lg:hidden">
+                      <button
+                        onClick={() => setShowPreview((s) => !s)}
+                        className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                      >
+                        {showPreview ? <EyeOff size={16} /> : <Eye size={16} />}
+                        {showPreview ? "Sembunyikan" : "Tampilkan"}
+                      </button>
+                      <button
+                        onClick={handleDownload}
+                        className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-3 py-2 text-xs font-medium text-white transition hover:bg-blue-800"
+                      >
+                        <Download size={16} />
+                        Excel
+                      </button>
+                    </div>
                   </div>
                 </div>
 
