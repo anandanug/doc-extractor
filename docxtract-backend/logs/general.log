@@ -1,0 +1,4 @@
+2025-10-24 07:03:20 | INFO | general | Start preprocessing: Extracting text from file 'temp_Invoice_1.PDF'
+2025-10-24 07:03:20 | INFO | general | Extracted text from page 1
+2025-10-24 07:03:20 | INFO | general | Extracted text from page 2
+2025-10-24 07:03:20 | INFO | general | Completed text extraction.
