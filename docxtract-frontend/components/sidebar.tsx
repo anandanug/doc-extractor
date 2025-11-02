@@ -1,6 +1,6 @@
 "use client"
 
-import { FileText, History, Settings, Zap } from "lucide-react"
+import { CloudDownloadIcon, FileText, History, Settings, Zap } from "lucide-react"
 
 interface SidebarProps {
   currentPage: string
@@ -9,7 +9,7 @@ interface SidebarProps {
 
 export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
   const navItems = [
-    { id: "extraction", label: "Extraction", icon: Zap },
+    { id: "extraction", label: "Extraction", icon: CloudDownloadIcon },
     { id: "history", label: "History", icon: History },
     { id: "templates", label: "Templates", icon: FileText },
     { id: "settings", label: "Settings", icon: Settings },
