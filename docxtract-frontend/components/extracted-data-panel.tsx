@@ -71,7 +71,7 @@ export function ExtractedDataPanel({ data, fileName, onFieldChange, onHighlightF
           </button>
 
           {expandedSections.has("basic") && (
-            <div className="px-4 py-3 space-y-4 bg-muted bg-opacity-30">
+            <div className="px-4 py-3 space-y-4 bg-background bg-opacity-30">
               {Object.entries(editedData)
                 .filter(([key]) => !key.includes("Item") && key !== "items")
                 .map(([key, value]) => (
@@ -111,12 +111,12 @@ export function ExtractedDataPanel({ data, fileName, onFieldChange, onHighlightF
             </button>
 
             {expandedSections.has("items") && (
-              <div className="px-4 py-3 space-y-4 bg-muted bg-opacity-30">
+              <div className="px-4 py-3 space-y-4 bg-background bg-opacity-30">
                 <div className="space-y-4">
                   {items.map((item, idx) => (
                     <div
                       key={idx}
-                      className="p-3 border border-border rounded-lg space-y-3 hover:bg-accent hover:bg-opacity-5 transition-colors"
+                      className="p-3 border border-border rounded-lg space-y-3 hover:bg-background hover:bg-opacity-5 transition-colors"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">

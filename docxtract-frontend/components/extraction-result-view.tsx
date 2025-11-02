@@ -90,21 +90,21 @@ export function ExtractionResultView({
           <span className="text-xs font-medium text-muted-foreground">Export as:</span>
           <button
             onClick={() => handleExport("json")}
-            className="px-3 py-1.5 text-xs font-medium border border-border rounded-md text-foreground hover:bg-muted transition-colors flex items-center gap-1"
+            className="px-3 py-1.5 text-xs font-medium border border-border rounded-md text-foreground hover:bg-primary hover:text-white transition-colors flex items-center gap-1"
           >
             <Download className="w-3 h-3" />
             JSON
           </button>
           <button
             onClick={() => handleExport("csv")}
-            className="px-3 py-1.5 text-xs font-medium border border-border rounded-md text-foreground hover:bg-muted transition-colors flex items-center gap-1"
+            className="px-3 py-1.5 text-xs font-medium border border-border rounded-md text-foreground hover:bg-primary hover:text-white transition-colors flex items-center gap-1"
           >
             <Download className="w-3 h-3" />
             CSV
           </button>
           <button
             onClick={() => handleExport("excel")}
-            className="px-3 py-1.5 text-xs font-medium border border-border rounded-md text-foreground hover:bg-muted transition-colors flex items-center gap-1"
+            className="px-3 py-1.5 text-xs font-medium border border-border rounded-md text-foreground hover:bg-primary hover:text-white transition-colors flex items-center gap-1"
           >
             <Download className="w-3 h-3" />
             Excel
@@ -114,22 +114,7 @@ export function ExtractionResultView({
 
       {/* Split View Content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Document Viewer - Left Panel with Collapse Toggle */}
-        {!isDocumentCollapsed && (
-          <div className="w-1/2 min-w-0 flex flex-col relative">
-            <DocumentViewer fileName={fileName} fileType={fileType} highlightedText={highlightedField || undefined} />
-
-            <button
-              onClick={() => setIsDocumentCollapsed(true)}
-              className="absolute right-0 top-1/2 -translate-y-1/2 bg-background border border-l-0 border-border p-1.5 hover:bg-muted transition-colors rounded-r-none z-10"
-              title="Collapse document viewer"
-            >
-              <ChevronLeft className="w-4 h-4 text-foreground" />
-            </button>
-          </div>
-        )}
-
-        {/* Extracted Data Panel - Right Panel with Expand Toggle */}
+        {/* Extracted Data Panel - Left Panel with Expand Toggle */}
         <div
           className={`${isDocumentCollapsed ? "w-full" : "w-1/2"} min-w-0 flex flex-col relative transition-all duration-300`}
         >
@@ -145,13 +130,28 @@ export function ExtractionResultView({
           {isDocumentCollapsed && (
             <button
               onClick={() => setIsDocumentCollapsed(false)}
-              className="absolute left-0 top-1/2 -translate-y-1/2 bg-background border border-r-0 border-border p-1.5 hover:bg-muted transition-colors rounded-l-none z-10"
+              className="absolute right-0 top-1/2 -translate-y-1/2 bg-background border border-l-0 border-border p-1.5 hover:bg-muted transition-colors rounded-r-none z-10"
               title="Expand document viewer"
             >
-              <ChevronRight className="w-4 h-4 text-foreground" />
+              <ChevronLeft className="w-4 h-4 text-foreground" />
             </button>
           )}
         </div>
+
+        {/* Document Viewer - Right Panel with Collapse Toggle */}
+        {!isDocumentCollapsed && (
+          <div className="w-1/2 min-w-0 flex flex-col relative">
+            <DocumentViewer fileName={fileName} fileType={fileType} highlightedText={highlightedField || undefined} />
+
+            <button
+              onClick={() => setIsDocumentCollapsed(true)}
+              className="absolute left-0 top-1/2 -translate-y-1/2 bg-background border border-r-0 border-border p-1.5 hover:bg-muted transition-colors rounded-l-none z-10"
+              title="Collapse document viewer"
+            >
+              <ChevronRight className="w-4 h-4 text-foreground" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

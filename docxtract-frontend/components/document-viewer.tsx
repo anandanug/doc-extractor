@@ -22,7 +22,7 @@ export function DocumentViewer({ fileName, fileType = "PDF", highlightedText }: 
   }
 
   return (
-    <div className="h-full flex flex-col bg-muted border-r border-border">
+    <div className="h-full flex flex-col bg-background border-r border-border">
       {/* Header */}
       <div className="border-b border-border p-4 space-y-3">
         <div>
@@ -53,7 +53,7 @@ export function DocumentViewer({ fileName, fileType = "PDF", highlightedText }: 
       </div>
 
       {/* Document Preview Area */}
-      <div className="flex-1 overflow-auto p-6 flex items-center justify-center bg-muted bg-opacity-50">
+      <div className="flex-1 overflow-auto p-6 flex items-center justify-center bg-background bg-opacity-50">
         <div
           className={`bg-white rounded-lg shadow-lg border border-border transition-transform ${
             highlightedText ? "ring-2 ring-primary ring-opacity-50" : ""
