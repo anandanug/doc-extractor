@@ -24,8 +24,8 @@ export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
             <Zap className="w-6 h-6 text-primary-foreground" />
           </div>
           <div>
-            <div className="font-bold text-lg text-sidebar-foreground">AI EXTRACT</div>
-            <div className="text-xs text-sidebar-accent">Data Extraction</div>
+            <div className="font-bold text-lg text-sidebar-foreground">AI Extract</div>
+            <div className="text-xs text-sidebar-foreground">Data Extraction</div>
           </div>
         </div>
       </div>

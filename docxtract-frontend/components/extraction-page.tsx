@@ -152,9 +152,7 @@ export function ExtractionPage() {
           {uploadedFile && (
             <div className="bg-card border border-border rounded-lg p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-accent bg-opacity-20 rounded-lg flex items-center justify-center">
-                  <FileIcon className="w-6 h-6 text-accent" />
-                </div>
+                <FileIcon className="w-12 h-12 text-accent bg-accent text-accent-foreground rounded-full p-2 transition-colors" />
                 <div className="flex-1">
                   <p className="font-medium text-foreground">{uploadedFile.name}</p>
                   <p className="text-sm text-muted-foreground">{formatFileSize(uploadedFile.size)}</p>
