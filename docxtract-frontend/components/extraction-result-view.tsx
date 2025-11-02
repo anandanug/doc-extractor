@@ -7,6 +7,7 @@ import { Download, Check, X, RotateCw, ChevronLeft, ChevronRight } from "lucide-
 
 interface ExtractionResultViewProps {
   fileName: string
+  file?: File | null
   fileType?: string
   extractedData: Record<string, any>
   onSave?: (data: Record<string, any>) => void
@@ -17,6 +18,7 @@ interface ExtractionResultViewProps {
 
 export function ExtractionResultView({
   fileName,
+  file,
   fileType = "PDF",
   extractedData,
   onSave,
@@ -141,7 +143,7 @@ export function ExtractionResultView({
         {/* Document Viewer - Right Panel with Collapse Toggle */}
         {!isDocumentCollapsed && (
           <div className="w-1/2 min-w-0 flex flex-col relative">
-            <DocumentViewer fileName={fileName} fileType={fileType} highlightedText={highlightedField || undefined} />
+            <DocumentViewer fileName={fileName} file={file} fileType={fileType} highlightedText={highlightedField || undefined} />
 
             <button
               onClick={() => setIsDocumentCollapsed(true)}

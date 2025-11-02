@@ -81,6 +81,7 @@ export function ExtractionPage() {
     return (
       <ExtractionResultView
         fileName={uploadedFile.name}
+        file={uploadedFile}
         fileType="PDF"
         extractedData={extractedData}
         onCancel={handleCancelResult}
