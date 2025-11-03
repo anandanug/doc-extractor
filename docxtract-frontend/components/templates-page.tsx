@@ -60,8 +60,8 @@ export function TemplatesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Templates</h1>
-          <p className="text-muted-foreground">Create and manage extraction templates for your documents</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Templat</h1>
+          <p className="text-muted-foreground">Buat dan kelola templat ekstraksi untuk dokumen Anda</p>
         </div>
         <button
           onClick={() => handleOpenModal()}
@@ -117,7 +117,7 @@ export function TemplatesPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleOpenModal(template)}
-                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-accent bg-opacity-10 text-accent hover:bg-opacity-20 transition-colors font-medium text-sm"
+                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-accent bg-opacity-10 text-foreground hover:bg-opacity-20 transition-colors font-medium text-sm"
               >
                 <Edit2 className="w-4 h-4" />
                 Edit

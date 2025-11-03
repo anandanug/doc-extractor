@@ -83,6 +83,7 @@ export function ExtractionPage() {
         fileName={uploadedFile.name}
         file={uploadedFile}
         fileType="PDF"
+        documentType={documentType}
         extractedData={extractedData}
         onCancel={handleCancelResult}
         onRerun={() => {
@@ -101,8 +102,8 @@ export function ExtractionPage() {
     <div className="p-8 space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Document Extraction</h1>
-        <p className="text-muted-foreground">Upload your document and let AI extract the data automatically</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Dokumen Ekstraksi</h1>
+        <p className="text-muted-foreground">Unggah dokumen Anda, dan biarkan AI mengekstrak datanya secara otomatis.</p>
       </div>
 
       {/* Error Message */}
@@ -129,7 +130,7 @@ export function ExtractionPage() {
         <div className="space-y-6">
           {/* Document Type Selection */}
           <div className="bg-card border border-border rounded-lg p-6">
-            <h2 className="text-sm font-semibold text-foreground mb-4">Document Type</h2>
+            <h2 className="text-sm font-semibold text-foreground mb-4">Tipe Dokumen</h2>
             <DocumentTypeSelector value={documentType} onChange={setDocumentType} disabled={isExtracting} />
           </div>
 
@@ -146,7 +147,7 @@ export function ExtractionPage() {
                 : "bg-[#418ae4] text-white hover:bg-[#418ae4]/90"
             }`}
           >
-            {isExtracting ? "Extracting..." : "Start Extraction"}
+            {isExtracting ? "Mengekstrak..." : "Mulai Ekstraksi"}
           </button>
 
           {/* Uploaded File Info and Progress */}

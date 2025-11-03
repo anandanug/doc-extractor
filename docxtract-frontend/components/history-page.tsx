@@ -52,8 +52,8 @@ export function HistoryPage() {
     <div className="p-8 space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Extraction History</h1>
-        <p className="text-muted-foreground">View and manage all your extracted documents</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Riwayat Ekstraksi</h1>
+        <p className="text-muted-foreground">Lihat dan kelola semua dokumen yang telah diekstraksi</p>
       </div>
 
       {/* Filters */}

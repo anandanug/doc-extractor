@@ -2,13 +2,16 @@
 
 import { useState } from "react"
 import { DocumentViewer } from "./document-viewer"
-import { ExtractedDataPanel } from "./extracted-data-panel"
+import { ExtractedDataPanelInvoice } from "./extracted-data-panel-invoice"
+import { ExtractedDataPanelReceipt } from "./extracted-data-panel-receipt"
+import { ExtractedDataPanelGeneric } from "./extracted-data-panel-generic"
 import { Download, Check, X, RotateCw, ChevronLeft, ChevronRight } from "lucide-react"
 
 interface ExtractionResultViewProps {
   fileName: string
   file?: File | null
   fileType?: string
+  documentType?: string
   extractedData: Record<string, any>
   onSave?: (data: Record<string, any>) => void
   onExport?: (format: "json" | "csv" | "excel") => void
@@ -20,6 +23,7 @@ export function ExtractionResultView({
   fileName,
   file,
   fileType = "PDF",
+  documentType = "other",
   extractedData,
   onSave,
   onExport,
@@ -52,14 +56,34 @@ export function ExtractionResultView({
     onExport?.(format)
   }
 
+  const renderDataPanel = () => {
+    const commonProps = {
+      data: extractedData,
+      fileName: fileName,
+      onHighlightField: setHighlightedField,
+      onFieldChange: (fieldName: string, value: string) => {
+        extractedData[fieldName] = value
+      },
+    }
+
+    switch (documentType) {
+      case "invoice":
+        return <ExtractedDataPanelInvoice {...commonProps} />
+      case "receipt":
+        return <ExtractedDataPanelReceipt {...commonProps} />
+      default:
+        return <ExtractedDataPanelGeneric {...commonProps} />
+    }
+  }
+
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
       <div className="border-b border-border bg-background p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Extraction Complete</h1>
-            <p className="text-sm text-muted-foreground mt-1">Review and verify the extracted data below</p>
+            <h1 className="text-2xl font-bold text-foreground">Ekstraksi selesai</h1>
+            <p className="text-sm text-muted-foreground mt-1">Tinjau dan verifikasi data yang telah diekstrak di bawah ini</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -67,14 +91,14 @@ export function ExtractionResultView({
               className="px-4 py-2 text-sm font-medium border border-border rounded-lg text-foreground hover:bg-muted transition-colors flex items-center gap-2"
             >
               <X className="w-4 h-4" />
-              Cancel
+              Batalkan
             </button>
             <button
               onClick={onRerun}
               className="px-4 py-2 text-sm font-medium border border-border rounded-lg text-foreground hover:bg-muted transition-colors flex items-center gap-2"
             >
               <RotateCw className="w-4 h-4" />
-              Re-run
+              Ulangi Ekstraksi
             </button>
             <button
               onClick={handleSave}
@@ -82,14 +106,14 @@ export function ExtractionResultView({
               className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-opacity-90 transition-colors flex items-center gap-2 disabled:opacity-50"
             >
               <Check className="w-4 h-4" />
-              {isSaving ? "Saving..." : "Save & Confirm"}
+              {isSaving ? "Menyimpan..." : "Simpan & Konfirmasi"}
             </button>
           </div>
         </div>
 
         {/* Export Options */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-muted-foreground">Export as:</span>
+          <span className="text-xs font-medium text-muted-foreground">Ekspor sebagai:</span>
           <button
             onClick={() => handleExport("json")}
             className="px-3 py-1.5 text-xs font-medium border border-border rounded-md text-foreground hover:bg-primary hover:text-white transition-colors flex items-center gap-1"
@@ -120,14 +144,7 @@ export function ExtractionResultView({
         <div
           className={`${isDocumentCollapsed ? "w-full" : "w-1/2"} min-w-0 flex flex-col relative transition-all duration-300`}
         >
-          <ExtractedDataPanel
-            data={extractedData}
-            fileName={fileName}
-            onHighlightField={setHighlightedField}
-            onFieldChange={(fieldName, value) => {
-              extractedData[fieldName] = value
-            }}
-          />
+          {renderDataPanel()}
 
           {isDocumentCollapsed && (
             <button

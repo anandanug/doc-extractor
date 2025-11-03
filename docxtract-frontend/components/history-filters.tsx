@@ -24,7 +24,7 @@ export function HistoryFilters({ onSearch, onTypeFilter, selectedType }: History
         <Search className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
         <input
           type="text"
-          placeholder="Search by filename or type..."
+          placeholder="Cari berdasarkan nama file atau jenis dokumen..."
           onChange={(e) => onSearch(e.target.value)}
           className="w-full pl-10 pr-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
         />
@@ -32,7 +32,7 @@ export function HistoryFilters({ onSearch, onTypeFilter, selectedType }: History
 
       {/* Type Filter */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground">Filter by Type</label>
+        <label className="text-sm font-medium text-foreground">Filter berdasarkan jenis</label>
         <div className="flex flex-wrap gap-2">
           {documentTypes.map((type) => (
             <button

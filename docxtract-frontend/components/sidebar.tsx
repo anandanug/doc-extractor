@@ -1,6 +1,7 @@
 "use client"
 
 import { CloudDownloadIcon, FileText, History, Settings, Zap } from "lucide-react"
+import Image from "next/image"
 
 interface SidebarProps {
   currentPage: string
@@ -9,10 +10,10 @@ interface SidebarProps {
 
 export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
   const navItems = [
-    { id: "extraction", label: "Extraction", icon: CloudDownloadIcon },
-    { id: "history", label: "History", icon: History },
-    { id: "templates", label: "Templates", icon: FileText },
-    { id: "settings", label: "Settings", icon: Settings },
+    { id: "extraction", label: "Ekstraksi", icon: CloudDownloadIcon },
+    { id: "history", label: "Riwayat", icon: History },
+    { id: "templates", label: "Templat", icon: FileText },
+    { id: "settings", label: "Pengaturan", icon: Settings },
   ]
 
   return (
@@ -20,12 +21,18 @@ export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
       {/* Logo */}
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded bg-primary flex items-center justify-center">
-            <Zap className="w-6 h-6 text-primary-foreground" />
+          <div className="w-10 h-10 rounded bg-background flex items-center justify-center">
+            <Image 
+              src="/Burung2.png"  // Ganti dengan nama file logo Anda (contoh: /logo.svg, /logo.png, dll.)
+              alt="DokuAI Logo"
+              width={32}
+              height={32} 
+              className="rounded"
+            />
           </div>
           <div>
-            <div className="font-bold text-lg text-sidebar-foreground">AI Extract</div>
-            <div className="text-xs text-sidebar-foreground">Data Extraction</div>
+            <div className="font-bold text-lg text-sidebar-foreground">DokuAI</div>
+            <div className="text-xs text-sidebar-foreground">Dokumen Ekstraksi</div>
           </div>
         </div>
       </div>

@@ -1,5 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:5000"
+
+// Map document types to backend endpoints
+const DOCUMENT_TYPE_TO_ENDPOINT: Record<string, string> = {
+  invoice: "/extract/invoice",
+  "packing-list": "/extract/packing-list",
+  awb: "/extract/awb",
+}
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
@@ -10,98 +19,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
 
-    // In production, this would call an AI service like Claude, GPT, or Grok
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    // Get the appropriate endpoint for the document type
+    const endpoint = DOCUMENT_TYPE_TO_ENDPOINT[documentType] || DOCUMENT_TYPE_TO_ENDPOINT["invoice"]
+    const backendUrl = `${BACKEND_URL}${endpoint}`
 
-    // Mock extraction results based on document type
-    const mockResults = {
-      invoice: {
-        invoiceNumber: "INV-2024-001",
-        date: "2024-01-15",
-        dueDate: "2024-02-15",
-        amount: "$5,432.50",
-        vendor: "Acme Corp",
-        items: [
-          {
-            nomor: "1",
-            namaProduk: "Professional Services",
-            jumlah: 40,
-            harga: "$150.00",
-            total: "$6,000.00",
-          },
-          {
-            nomor: "2",
-            namaProduk: "Software License",
-            jumlah: 5,
-            harga: "$200.00",
-            total: "$1,000.00",
-          },
-          {
-            nomor: "3",
-            namaProduk: "Support & Maintenance",
-            jumlah: 1,
-            harga: "$500.00",
-            total: "$500.00",
-          },
-        ],
-      },
-      receipt: {
-        merchant: "Coffee Shop Co",
-        date: "2024-01-15",
-        time: "10:30 AM",
-        amount: "$12.50",
-        itemCount: 2,
-        paymentMethod: "Credit Card",
-        items: [
-          {
-            nomor: "1",
-            namaProduk: "Espresso",
-            jumlah: 2,
-            harga: "$5.00",
-            total: "$10.00",
-          },
-          {
-            nomor: "2",
-            namaProduk: "Pastry",
-            jumlah: 1,
-            harga: "$2.50",
-            total: "$2.50",
-          },
-        ],
-      },
-      contract: {
-        title: "Service Agreement",
-        startDate: "2024-02-01",
-        endDate: "2025-01-31",
-        parties: 2,
-        termClauses: 5,
-      },
-      "bank-statement": {
-        bank: "First National Bank",
-        accountNumber: "****5678",
-        period: "January 2024",
-        openingBalance: "$10,000.00",
-        closingBalance: "$12,500.00",
-        transactions: 12,
-      },
-      other: {
-        content: "Document processed",
-        pages: 1,
-        language: "English",
-      },
+    // Create FormData for the backend request
+    const backendFormData = new FormData()
+    backendFormData.append("file", file)
+
+    // Call the Flask backend
+    const response = await fetch(backendUrl, {
+      method: "POST",
+      body: backendFormData,
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
+      return NextResponse.json(
+        { error: "Backend extraction failed", details: errorData.error || "Unknown error" },
+        { status: response.status },
+      )
     }
 
-    const result = mockResults[documentType as keyof typeof mockResults] || mockResults.other
+    const backendResponse = await response.json()
+
+    // Backend returns: { execution_time: number, data: {...} }
+    // We need to extract the data field and return it as extractedData
+    const extractedData = backendResponse.data || backendResponse
 
     return NextResponse.json({
       success: true,
       fileName: file.name,
       fileSize: file.size,
       documentType,
-      extractedData: result,
+      extractedData,
+      executionTime: backendResponse.execution_time,
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
+    console.error("Extraction error:", error)
     return NextResponse.json(
       { error: "Extraction failed", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 },

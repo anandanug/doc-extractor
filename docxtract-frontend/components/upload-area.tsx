@@ -61,13 +61,13 @@ export function UploadArea({ onFileUpload, uploadedFile }: UploadAreaProps) {
 
         {uploadedFile ? (
           <div>
-            <p className="font-semibold text-foreground">File uploaded!</p>
-            <p className="text-sm text-muted-foreground">Click or drag another file to replace</p>
+            <p className="font-semibold text-foreground">File berhasil diunggah!</p>
+            <p className="text-sm text-muted-foreground">Klik atau seret file lain untuk menggantinya.</p>
           </div>
         ) : (
           <div>
-            <p className="font-semibold text-foreground mb-1">Drag your document here or click</p>
-            <p className="text-sm text-muted-foreground">Supported: PDF, DOCX, XLSX, PNG, JPG</p>
+            <p className="font-semibold text-foreground mb-1">Seret dokumen Anda ke sini atau klik untuk mengunggah.</p>
+            <p className="text-sm text-muted-foreground">Format yang didukung: PDF, PNG, JPG.</p>
           </div>
         )}
 
